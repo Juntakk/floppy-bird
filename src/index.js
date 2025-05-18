@@ -7,7 +7,7 @@ const config = {
   physics: {
     default: "arcade",
     arcade: {
-      debug: false,
+      debug: true,
     },
   },
   scene: {
@@ -23,18 +23,15 @@ const initialBirdPos = {
   x: config.width / 10,
   y: config.height / 2,
 };
-const VELOCITY = 200;
-const flapVelocity = 250;
+const horizontalFlapVelocity = 200;
+const pipeVelocity = 200;
+const verticalFlapVelocity = 250;
+const pipesToRender = 4;
+let pipeHorizontalDist = 0;
 let pipeDistanceRange = [150, 250];
-let pipeDistance = Phaser.Math.Between(...pipeDistanceRange);
-let pipeVerticalPos = Phaser.Math.Between(
-  20,
-  config.height - 20 - pipeDistance
-);
 
 let bird = null;
-let lowerPipe = null;
-let upperPipe = null;
+let pipes = null;
 
 function preload() {
   this.load.image("sky", "assets/sky.png");
@@ -43,6 +40,7 @@ function preload() {
 }
 
 function create() {
+  pipes = this.physics.add.group();
   this.add.image(0, 0, "sky").setOrigin(0);
   bird = this.physics.add
     .sprite(initialBirdPos.x, initialBirdPos.y, "bird")
@@ -50,14 +48,16 @@ function create() {
     .setOrigin(0);
 
   bird.body.gravity.y = 400;
-  bird.body.velocity.x = VELOCITY;
+
+  for (let index = 0; index < pipesToRender; index++) {
+    const upperPipe = pipes.create(0, 0, "pipe").setOrigin(0, 1);
+    const lowerPipe = pipes.create(0, 0, "pipe").setOrigin(0, 0);
+
+    placePipes(upperPipe, lowerPipe);
+  }
+  pipes.setVelocityX(-pipeVelocity);
 
   this.input.keyboard.on("keydown-SPACE", flap);
-
-  upperPipe = this.add.sprite(400, pipeVerticalPos, "pipe").setOrigin(0, 1);
-  lowerPipe = this.add
-    .sprite(400, upperPipe.y + pipeDistance, "pipe")
-    .setOrigin(0, 0);
 }
 
 function update(time, delta) {
@@ -67,12 +67,28 @@ function update(time, delta) {
 }
 
 function flap() {
-  bird.body.velocity.y = -flapVelocity;
+  bird.body.velocity.y = -verticalFlapVelocity;
 }
 
 function restartBirdPosition() {
   bird.body.x = initialBirdPos.x;
   bird.body.y = initialBirdPos.y;
-  bird.body.velocity.x = VELOCITY;
   bird.body.velocity.y = 0;
 }
+
+function placePipes(upperPipe, lowerPipe) {
+  pipeHorizontalDist += 400;
+  let pipeDistance = Phaser.Math.Between(...pipeDistanceRange);
+  let pipeVerticalPos = Phaser.Math.Between(
+    20,
+    config.height - 20 - pipeDistance
+  );
+
+  upperPipe.x = pipeHorizontalDist;
+  upperPipe.y = pipeVerticalPos;
+
+  lowerPipe.x = upperPipe.x;
+  lowerPipe.y = upperPipe.y + pipeDistance;
+}
+
+function getRightmostPipe() {}
