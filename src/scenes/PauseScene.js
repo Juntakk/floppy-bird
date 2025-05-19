@@ -1,19 +1,18 @@
 import BaseScene from "./BaseScene";
 
-class MenuScene extends BaseScene {
+class PauseScene extends BaseScene {
   constructor(config) {
-    super("MenuScene", config);
+    super("PauseScene", config);
 
     this.menu = [
       {
         scene: "PlayScene",
-        text: "Play",
+        text: "Continue",
       },
       {
-        scene: "ScoreScene",
-        text: "Score",
+        scene: "MenuScene",
+        text: "Exit",
       },
-      { scene: null, text: "Exit" },
     ];
   }
 
@@ -36,13 +35,15 @@ class MenuScene extends BaseScene {
     });
 
     textGO.on("pointerup", () => {
-      menuItem.scene && this.scene.start(menuItem.scene);
-
-      if (menuItem.text === "Exit") {
-        this.game.destroy(true);
+      if (menuItem.scene && menuItem.text === "Continue") {
+        this.scene.stop("PauseScene");
+        this.scene.resume("PlayScene");
+      } else {
+        this.scene.stop("PlayScene");
+        this.scene.start(menuItem.scene);
       }
     });
   }
 }
 
-export default MenuScene;
+export default PauseScene;

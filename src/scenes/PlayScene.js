@@ -26,10 +26,43 @@ class PlayScene extends BaseScene {
     this.createScore();
     this.createPause();
     this.handleInput();
+    this.listenToEvents();
   }
   update() {
     this.checkGameStatus();
     this.recyclePipes();
+  }
+
+  listenToEvents() {
+    if (this.pauseEvent) {
+      return;
+    }
+
+    this.pauseEvent = this.events.on("resume", () => {
+      this.initialTime = 3;
+      this.countDownText = this.add
+        .text(...this.screenCenter, `Game starts in ${this.initialTime}`, {
+          fontSize: "32px",
+          fill: "#000",
+        })
+        .setOrigin(0.5);
+      this.timedEvent = this.time.addEvent({
+        delay: 1000,
+        callback: this.countDown,
+        callbackScope: this,
+        loop: true,
+      });
+    });
+  }
+
+  countDown() {
+    this.initialTime--;
+    this.countDownText.setText(`Game starts in ${this.initialTime}`);
+    if (this.initialTime <= 0) {
+      this.countDownText.setText("");
+      this.physics.resume();
+      this.timedEvent.remove();
+    }
   }
 
   createBG() {
@@ -102,6 +135,7 @@ class PlayScene extends BaseScene {
       .on("pointerdown", () => {
         this.physics.pause();
         this.scene.pause();
+        this.scene.launch("PauseScene");
       });
   }
   saveBestScore() {
