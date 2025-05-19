@@ -13,7 +13,7 @@ class MenuScene extends BaseScene {
         scene: "ScoreScene",
         text: "Score",
       },
-      { scene: null, text: "Exit" },
+      // { scene: null, text: "Exit" },
     ];
   }
 
