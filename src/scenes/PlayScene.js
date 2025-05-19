@@ -1,27 +1,30 @@
-import Phaser from "phaser";
+import BaseScene from "./BaseScene";
 
-class PlayScene extends Phaser.Scene {
+class PlayScene extends BaseScene {
   constructor(config) {
-    super("PlayScene");
-    this.config = config;
+    super("PlayScene", config);
 
     this.bird = null;
     this.pipes = null;
+    this.hasScored = false;
+
     this.pipesToRender = 4;
     this.pipeVelocity = 200;
-    this.verticalFlapVelocity = 250;
-
+    this.verticalFlapVelocity = 300;
     this.pipeVerticalDistanceRange = [150, 250];
     this.pipeHorizontalDistanceRange = [350, 400];
+
+    this.score = 0;
+    this.scoreText = null;
   }
-  preload() {
-    this.loadAssets();
-  }
+
   create() {
-    this.createBG();
+    super.create();
     this.createBird();
     this.createPipes();
     this.createColliders();
+    this.createScore();
+    this.createPause();
     this.handleInput();
   }
   update() {
@@ -29,11 +32,6 @@ class PlayScene extends Phaser.Scene {
     this.recyclePipes();
   }
 
-  loadAssets() {
-    this.load.image("sky", "assets/sky.png");
-    this.load.image("bird", "assets/bird.png");
-    this.load.image("pipe", "assets/pipe.png");
-  }
   createBG() {
     this.add.image(0, 0, "sky").setOrigin(0);
   }
@@ -43,7 +41,7 @@ class PlayScene extends Phaser.Scene {
       .setScale(1.5)
       .setOrigin(0);
 
-    this.bird.body.gravity.y = 400;
+    this.bird.body.gravity.y = 600;
     this.bird.body.setCollideWorldBounds(true);
   }
   createPipes() {
@@ -82,11 +80,36 @@ class PlayScene extends Phaser.Scene {
     this.bird.body.velocity.y = -this.verticalFlapVelocity;
   }
   gameOver() {
-    //  this.bird.body.x = this.config.startPosition.x;
-    //  this.bird.body.y = this.config.startPosition.y;
-    //  this.bird.body.velocity.y = 0;
     this.physics.pause();
     this.bird.setTint(0xff0000);
+
+    this.saveBestScore();
+    this.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        this.scene.restart();
+      },
+      callbackScope: this,
+      loop: false,
+    });
+  }
+  createPause() {
+    this.add
+      .image(this.config.width - 10, this.config.height - 10, "pause")
+      .setScale(3)
+      .setOrigin(1)
+      .setInteractive()
+      .on("pointerdown", () => {
+        this.physics.pause();
+        this.scene.pause();
+      });
+  }
+  saveBestScore() {
+    const bestScoreText = localStorage.getItem("bestScore");
+    const bestScore = bestScoreText && parseInt(bestScoreText, 10);
+    if (!bestScore || this.score > bestScore) {
+      localStorage.setItem("bestScore", this.score);
+    }
   }
   placePipes(upperPipe, lowerPipe) {
     let rightMostPipeX = this.getRightmostPipe();
@@ -118,12 +141,36 @@ class PlayScene extends Phaser.Scene {
     let tempPipes = [];
     this.pipes.getChildren().forEach((pipe) => {
       if (pipe.getBounds().right <= 0) {
+        pipe.hasScored = false;
         tempPipes.push(pipe);
         if (tempPipes.length === 2) {
           this.placePipes(...tempPipes);
+          this.increaseScore();
+          this.saveBestScore();
         }
       }
     });
+  }
+  createScore() {
+    this.score = 0;
+    const bestScore = localStorage.getItem("bestScore");
+    this.scoreText = this.add.text(16, 16, `Score: ${0}`, {
+      fontSize: "32px",
+      fill: "#000",
+    });
+    this.bestScoreText = this.add.text(
+      18,
+      52,
+      `Best score: ${bestScore || 0}`,
+      {
+        fontSize: "18px",
+        fill: "#000",
+      }
+    );
+  }
+  increaseScore() {
+    this.score += 1;
+    this.scoreText.setText(`Score: ${this.score}`);
   }
 }
 
