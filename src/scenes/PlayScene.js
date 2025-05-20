@@ -43,6 +43,7 @@ class PlayScene extends BaseScene {
     this.createPause();
     this.handleInput();
     this.listenToEvents();
+    this.startGame();
 
     this.anims.create({
       key: "fly",
@@ -60,7 +61,25 @@ class PlayScene extends BaseScene {
     this.checkGameStatus();
     this.recyclePipes();
   }
+  startGame() {
+    this.paused = true;
+    this.physics.pause();
 
+    let startText = this.add
+      .text(...this.screenCenter, "Press SPACE to jump", {
+        fontSize: "24px",
+        fill: "#fff",
+      })
+      .setFontStyle("bold")
+      .setOrigin(0.5, 0);
+
+    this.input.keyboard.on("keydown-SPACE", () => {
+      this.scene.resume("PlayScene");
+      this.paused = false;
+      this.physics.resume();
+      startText.setText("");
+    });
+  }
   listenToEvents() {
     if (this.pauseEvent) {
       return;
@@ -93,7 +112,7 @@ class PlayScene extends BaseScene {
     }
   }
   createBG() {
-    this.add.image(0, 0, "sky").setOrigin(0);
+    this.add.image(0, 0, "sky").setOrigin(0).setScale(5);
   }
   createBird() {
     this.bird = this.physics.add
